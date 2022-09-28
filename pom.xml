@@ -396,6 +396,26 @@
                     <artifactId>git-commit-id-plugin</artifactId>
                     <version>${git-commit-id-plugin.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>com.gradle</groupId>
+                    <artifactId>gradle-enterprise-maven-extension</artifactId>
+                    <configuration>
+                        <gradleEnterprise>
+                            <normalization>
+                                <runtimeClassPath>
+                                    <propertiesNormalizations>
+                                        <propertiesNormalization>
+                                            <path>openapi-generator-git.properties</path>
+                                            <ignoredProperties>
+                                                <ignore>git.build.time</ignore>
+                                            </ignoredProperties>
+                                        </propertiesNormalization>
+                                    </propertiesNormalizations>
+                                </runtimeClassPath>
+                            </normalization>
+                        </gradleEnterprise>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>

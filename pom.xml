@@ -424,11 +424,9 @@
                                             </fileSet>
                                             <fileSet>
                                                 <name>classesDirectory</name>
-                                                <excludes>
-                                                    <exclude>
-                                                        openapi-generator-git.properties
-                                                    </exclude>
-                                                </excludes>
+                                                <normalization>
+                                                    <strategy>CLASSPATH</strategy>
+                                                </normalization>
                                             </fileSet>
                                         </fileSets>
                                         <properties>

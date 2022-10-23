@@ -10,70 +10,58 @@ plugins {
 // Shared OpenAPI Generator version be passed via command line arg as -PopenApiGeneratorVersion=VERSION
 val openApiGeneratorVersion: String by project
 
+group = "org.openapitools"
+version = openApiGeneratorVersion
+description = """
+This plugin supports common functionality found in OpenAPI Generator CLI as a Gradle plugin.
+
+This gives you the ability to generate client SDKs, documentation, new generators, and to validate Open API 2.0 and 3.x
+specifications as part of your build. Other tasks are available as command line tasks.
+"""
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 repositories {
     mavenCentral()
+
+    // todo are these repositories needed?
     maven { url = uri("https://oss.sonatype.org/content/repositories/releases/") }
     maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
 }
 
 dependencies {
     implementation("org.openapitools:openapi-generator:$openApiGeneratorVersion")
-    testImplementation(kotlin("test"))
-    testImplementation("org.testng:testng:7.6.1")
+    testImplementation(kotlin("test-testng"))
 }
 
-tasks {
-    javadoc {
-        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
-    }
+tasks.withType<Javadoc>().configureEach {
+    (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+}
 
-    val javadocJar by registering(Jar::class) {
-        dependsOn(javadoc)
-        from(javadoc)
-        archiveClassifier.set("javadoc")
+tasks.named<Test>("test") {
+    useTestNG()
+    testLogging {
+        showStandardStreams = false
     }
-
-    val sourcesJar by registering(Jar::class) {
-        from(sourceSets.main.get().allSource)
-        archiveClassifier.set("sources")
-    }
-
-    artifacts {
-        archives(jar)
-        archives(javadocJar)
-        archives(sourcesJar)
-    }
-
-    test {
-        useTestNG()
-        testLogging.showStandardStreams = false
-        failFast = true
-        addTestOutputListener { descriptor, _ ->
-            logger.lifecycle("Running test: $descriptor")
-        }
-        addTestOutputListener { descriptor, event ->
-            // SLF4J may complain about multiple bindings depending on how this is run.
-            // This is just a warning, but can make test output less readable. So we ignore it specifically.
-            if (!event.message.contains("SLF4J:")) {
-                logger.lifecycle("Test: $descriptor produced standard out/err: ${event.message}")
-            }
+    beforeTest(closureOf<TestDescriptor> {
+        logger.lifecycle("Running test: $this")
+    })
+    addTestOutputListener { descriptor, event ->
+        // SLF4J may complain about multiple bindings depending on how this is run.
+        // This is just a warning, but can make test output less readable. So we ignore it specifically.
+        if (!event.message.contains("SLF4J:")) {
+            logger.lifecycle("Test: $descriptor produced standard out/err: ${event.message}")
         }
     }
 }
-
-group = "org.openapitools"
-version = openApiGeneratorVersion
-description = """
-This plugin supports common functionality found in Open API Generator CLI as a gradle plugin.
-
-This gives you the ability to generate client SDKs, documentation, new generators, and to validate Open API 2.0 and 3.x
-specifications as part of your build. Other tasks are available as command line tasks.
-"""
 
 publishing {
     publications {
-        register<MavenPublication>("default") {
-            from(components.getByName("java"))
+        register<MavenPublication>("mavenJava") {
+            from(components["java"])
             pom {
                 name.set("OpenAPI-Generator Contributors")
                 description.set(project.description)
@@ -108,7 +96,6 @@ publishing {
             }
         }
     }
-
     repositories {
         maven {
             name = "sonatype"
@@ -149,8 +136,9 @@ gradlePlugin {
 //// or stored as key=value pairs in ~/.gradle/gradle.properties
 //// You can also apply them in CI via environment variables. See Gradle's docs for details.
 signing {
+    // todo task publishPluginMavenPublicationToNexusRepository no longer exists
     setRequired {
         !openApiGeneratorVersion.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publishPluginMavenPublicationToNexusRepository")
     }
-    sign(publishing.publications)
+    sign(publishing.publications["mavenJava"])
 }

@@ -10,11 +10,16 @@ plugins {
 // Shared OpenAPI Generator version be passed via command line arg as -PopenApiGeneratorVersion=VERSION
 val openApiGeneratorVersion: String by project
 
+repositories {
+    mavenCentral()
+    maven { url = uri("https://oss.sonatype.org/content/repositories/releases/") }
+    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
+}
+
 dependencies {
-    implementation(gradleApi())
     implementation("org.openapitools:openapi-generator:$openApiGeneratorVersion")
     testImplementation(kotlin("test"))
-    testImplementation("org.testng:testng:7.6.0")
+    testImplementation("org.testng:testng:7.6.1")
 }
 
 tasks {

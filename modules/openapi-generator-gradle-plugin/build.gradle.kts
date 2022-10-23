@@ -1,10 +1,10 @@
 plugins {
-    kotlin("jvm") version "1.5.31"
-    id("com.gradle.plugin-publish") version "1.0.0-rc-3"
     `java-gradle-plugin`
     `kotlin-dsl`
     `maven-publish`
     signing
+    id("com.gradle.plugin-publish") version "1.0.0"
+    kotlin("jvm") version "1.6.20"
 }
 
 // Shared OpenAPI Generator version be passed via command line arg as -PopenApiGeneratorVersion=VERSION
@@ -12,9 +12,7 @@ val openApiGeneratorVersion: String by project
 
 dependencies {
     implementation(gradleApi())
-    // TODO: Compile and use plugin locally?
     implementation("org.openapitools:openapi-generator:$openApiGeneratorVersion")
-
     testImplementation(kotlin("test"))
     testImplementation("org.testng:testng:7.6.0")
 }

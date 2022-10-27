@@ -1,7 +1,6 @@
 <gradleEnterprise>
     <server>
-        <allowUntrusted>true</allowUntrusted>
-        <url>https://ec2-44-192-253-205.compute-1.amazonaws.com</url>
+        <url>https://ge.solutions-team.gradle.com/</url>
     </server>
     <buildScan>
         <backgroundBuildScanUpload>#{env['CI'] == null}</backgroundBuildScanUpload>
@@ -15,7 +14,8 @@
             <enabled>true</enabled>
         </local>
         <remote>
-            <enabled>false</enabled>
+            <enabled>true</enabled>
+            <storeEnabled>#{env['CI'] != null}</storeEnabled>
         </remote>
     </buildCache>
 </gradleEnterprise>

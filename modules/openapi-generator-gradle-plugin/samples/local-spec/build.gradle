@@ -1,123 +1,146 @@
-buildscript {
-    repositories {
-        mavenLocal()
-        maven { url "https://repo1.maven.org/maven2" }
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-        maven {
-            url "https://oss.sonatype.org/content/repositories/releases/"
-        }
-        maven {
-            url "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
-    }
-    dependencies {
-        // Updated version can be passed via command line arg as -PopenApiGeneratorVersion=VERSION
-        classpath "org.openapitools:openapi-generator-gradle-plugin:$openApiGeneratorVersion"
-    }
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+import org.openapitools.generator.gradle.plugin.tasks.ValidateTask
+
+plugins {
+    id("base")
+    id("org.openapi.generator")
 }
 
-apply plugin: 'org.openapi.generator'
-
+// Generates a new generator to be consumed via Open API Generator.
 openApiMeta {
     generatorName = "Sample"
     packageName = "org.openapitools.example"
-    outputFolder = "$buildDir/meta".toString()
+    outputFolder = "$buildDir/meta"
 }
 
+// Validates an Open API 2.0 or 3.x specification document.
 openApiValidate {
-    inputSpec = "$rootDir/petstore-v3.0-invalid.yaml".toString()
+    inputSpec = "$rootDir/petstore-v3.0-invalid.yaml"
     recommend = true
 }
 
-// Builds a Kotlin client by default.
+// Generates code via Open API Tools Generator for Open API 2.0 or 3.x specification documents.
 openApiGenerate {
+    // Builds a Kotlin client by default.
     generatorName = "kotlin"
-    inputSpec = "$rootDir/petstore-v3.0.yaml".toString()
-    outputDir = "$buildDir/kotlin".toString()
+    inputSpec = "$rootDir/petstore-v3.0.yaml"
+    outputDir = "$buildDir/kotlin"
     apiPackage = "org.openapitools.example.api"
     invokerPackage = "org.openapitools.example.invoker"
     modelPackage = "org.openapitools.example.model"
+
+    // set to true and set environment variable {LANG}_POST_PROCESS_FILE
+    // (e.g. SCALA_POST_PROCESS_FILE) to the linter/formatter to be processed.
+    // This command will be passed one file at a time for most supported post processors.
+    enablePostProcessFile = false
+    generateAliasAsModel = false
+    logToStderr = true
+    skipValidateSpec = true
+
     configOptions = [
             dateLibrary: "java8"
     ]
     globalProperties = [
             modelDocs: "false"
     ]
-    skipValidateSpec = true
-    logToStderr = true
-    generateAliasAsModel = false
-    // set to true and set environment variable {LANG}_POST_PROCESS_FILE
-    // (e.g. SCALA_POST_PROCESS_FILE) to the linter/formatter to be processed.
-    // This command will be passed one file at a time for most supported post processors.
-    enablePostProcessFile = false
 }
 
-task buildJavaResttemplateSdk(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
+// Registers a task to generate a Java client using RestTemplate.
+tasks.register("buildJavaRestTemplateSdk", GenerateTask) {
     generatorName = "java"
     library = "resttemplate"
-    inputSpec = "$rootDir/petstore-v3.0.yaml".toString()
+    inputSpec = "$rootDir/petstore-v3.0.yaml"
     outputDir = "$buildDir/java-resttemplate-api-client"
     apiPackage = "com.example.client"
     invokerPackage = "com.example.invoker"
-    modelPackage = "com.example.cdm"
+    modelPackage = "com.example.com"
+    groupId = 'com.example'
+    id = 'client'
+
+    enablePostProcessFile = false
+    generateAliasAsModel = false
+    logToStderr = true
+    skipValidateSpec = true
+
     configOptions = [
             dateLibrary: "java8"
     ]
-    groupId = 'com.example'
-    id = 'client'
-    skipValidateSpec = true
-    logToStderr = true
-    generateAliasAsModel = false
-    enablePostProcessFile = false
 }
 
-task buildGoSdk(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask){
+// Registers a task to generate a Go client.
+tasks.register("buildGoSdk", GenerateTask) {
     generatorName = "go"
-    inputSpec = "$rootDir/petstore-v3.0.yaml".toString()
+    inputSpec = "$rootDir/petstore-v3.0.yaml"
+    outputDir = "$buildDir/go"
+
     additionalProperties = [
             packageName: "petstore"
     ]
-    outputDir = "$buildDir/go".toString()
     configOptions = [
             dateLibrary: "threetenp"
     ]
 }
 
-task buildDotnetSdk(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask){
+// Registers a task to generate a .NET client.
+tasks.register("buildDotnetSdk", GenerateTask) {
     generatorName = "csharp-netcore"
-    inputSpec = "$rootDir/petstore-v3.0.yaml".toString()
+    inputSpec = "$rootDir/petstore-v3.0.yaml"
+    outputDir = "$buildDir/csharp-netcore"
+
     additionalProperties = [
-            packageGuid: "{321C8C3F-0156-40C1-AE42-D59761FB9B6C}",
+            packageGuid         : "{321C8C3F-0156-40C1-AE42-D59761FB9B6C}",
             useCompareNetObjects: "true"
     ]
-    outputDir = "$buildDir/csharp-netcore".toString()
     globalProperties = [
             models: "",
             apis  : "",
     ]
 }
 
-task generateGoWithInvalidSpec(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask){
-    validateSpec = true
+// Registers a task to generate a Go client, using an invalid specification.
+tasks.register("generateGoWithInvalidSpec", GenerateTask) {
     generatorName = "go"
-    inputSpec = "$rootDir/petstore-v3.0-invalid.yaml".toString()
+    inputSpec = "$rootDir/petstore-v3.0-invalid.yaml"
+    outputDir = "$buildDir/go"
+
+    validateSpec = true
+
     additionalProperties = [
             packageName: "petstore"
     ]
-    outputDir = "$buildDir/go".toString()
     configOptions = [
             dateLibrary: "threetenp"
     ]
 }
 
-task validateGoodSpec(type: org.openapitools.generator.gradle.plugin.tasks.ValidateTask){
-    inputSpec = "$rootDir/petstore-v3.0.yaml".toString()
+// Registers a lifecycle task which generates all specifications.
+def generateSpecs = tasks.register("generateSpecs") {
+    dependsOn(tasks.withType(GenerateTask))
 }
 
-task validateBadSpec(type: org.openapitools.generator.gradle.plugin.tasks.ValidateTask){
-    inputSpec = "$rootDir/petstore-v3.0-invalid.yaml".toString()
+// Makes 'build' generate all specifications.
+tasks.named("build").configure {
+    dependsOn(generateSpecs)
 }
 
-task validateSpecs(dependsOn: ['validateGoodSpec', 'validateBadSpec'])
+// Registers a task to validate a specification.
+tasks.register("validateGoodSpec", ValidateTask) {
+    inputSpec = "$rootDir/petstore-v3.0.yaml"
+    recommend = true
+}
+
+// Registers a task to validate a specification, with an invalid specification.
+tasks.register("validateBadSpec", ValidateTask) {
+    inputSpec = "$rootDir/petstore-v3.0-invalid.yaml"
+    recommend = true
+}
+
+// Registers a lifecycle task to validate all specifications.
+def validateSpecs = tasks.register("validateSpecs") {
+    dependsOn(tasks.withType(ValidateTask))
+}
+
+// Makes 'check' validate all specifications.
+tasks.named("check").configure {
+    dependsOn(validateSpecs)
+}
